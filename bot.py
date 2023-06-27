@@ -5,7 +5,9 @@ import json
 
 async def send_message(message, user_message, is_private):
     try:
-        color, title, response = handle_response(user_message)
+        color, title, response = handle_response(
+                message, user_message, is_private
+                )
         await message.author.send(embed=discord.Embed(
             color=color, title=title, description=response))\
             if is_private else await message.channel.send(embed=discord.Embed(
