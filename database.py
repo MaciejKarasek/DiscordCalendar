@@ -9,7 +9,7 @@ def CreateTables():
                CREATE TABLE IF NOT EXISTS Main
                (
                 [ID] INTEGER,
-                [User_ID] TEXT NOT NULL,
+                [User_ID] TEXT NOT NULL UNIQUE,
                 PRIMARY KEY(ID)
                )
                ''')
@@ -52,13 +52,10 @@ def CreateTables():
 def insertValues(message, taskmsg, todo, time, isprivate):
     conn = sqlite3.connect('tasks.db')
     db = conn.cursor()
+
     db.execute('''
-                SELECT * FROM Main WHERE User_ID = ?
-                ''', [str(message.author.id)])
-    user = db.fetchall()
-    if len(user) == 0:
-        db.execute('''
-                    INSERT INTO Main (User_ID) VALUES (?)
+                INSERT  OR IGNORE
+                INTO Main (User_ID) VALUES (?)
         ''', [str(message.author.id)])
     db.execute('''
                 SELECT ID FROM Main WHERE User_ID = ?
@@ -82,3 +79,49 @@ def insertValues(message, taskmsg, todo, time, isprivate):
                 VALUES (?, ?)
                 ''', [tskid, time[1]])
     conn.commit()
+
+
+def getValues(message, prv):
+    channelID = str(message.channel.id)
+    authorID = str(message.author.id)
+
+    conn = sqlite3.connect('tasks.db')
+    db = conn.cursor()
+
+    db.execute('''
+                SELECT ID FROM Main WHERE User_ID = ?
+                ''', [authorID])
+    usrID = db.fetchall()[0][0]
+    if not prv:
+        db.execute('''
+                    SELECT Task_ID FROM Tsk WHERE User_ID = ?
+                    AND isPrivate = ?
+                    ''', [usrID, prv])
+        tskID = db.fetchall()
+    else:
+        db.execute('''
+                    SELECT Task_ID FROM Tsk WHERE User_ID = ?
+                    ''', [usrID])
+        tskID = db.fetchall()
+    tskID = [i[0] for i in tskID]
+    tskSummary = [[0] * 4 for i in range(len(tskID))]
+    for i, id in enumerate(tskID):
+        db.execute('''
+                    SELECT Message, TD, Deadline FROM Msg
+                    WHERE Task_ID = ?
+                    ''', [id])
+        tskInfo = db.fetchall()[0]
+        tskSummary[i][0] = id
+        tskSummary[i][1] = tskInfo[0]
+        tskSummary[i][2] = tskInfo[1]
+        if tskInfo[2] == 1:
+            db.execute('''
+                    SELECT Date FROM Time
+                    WHERE Task_ID = ?
+                    ''', [id])
+            tskDate = db.fetchall()[0][0]
+            tskSummary[i][3] = tskDate
+        else:
+            tskSummary[i][3] = 0
+    conn.commit()
+    return tskSummary

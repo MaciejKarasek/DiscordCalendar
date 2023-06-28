@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 import sqlite3
-from database import insertValues
+from database import insertValues, getValues
 
 
 def handle_response(message, usr_message, is_private) -> str:
@@ -22,31 +22,75 @@ def handle_response(message, usr_message, is_private) -> str:
     if split_msg[0] == 'add':
         tsk_msg = ""
         todo_status = 'None'
-        date = 'None'
+        dt = 'None'
         endmsg = 0
-        time = (0, date)
+        time = (0, dt)
         for i, word in enumerate(split_msg[1:]):
             if i == 0:
                 tsk_msg = tsk_msg + word
-            if word[0] != '-' and endmsg == 0:
+            elif word[0] != '-' and endmsg == 0:
                 tsk_msg = tsk_msg + ' ' + word
-            else:
+            elif word == '-td':
                 endmsg = 1
-                if word == '-td':
-                    todo_status = 'TODO'
-                if word == '-time':
-                    print(split_msg[i+2])
-                    if split_msg[i+2] and split_msg[i+2][0] != '-':
-                        date_list = split_msg[i+1].split('.')
-                        date_list = [eval(j) for j in date_list]
-                        dt = date(date_list[0], date_list[1], date_list[2])
-                        time = (1, dt)
-                    else:
-                        dt = date.today() + timedelta(days=1)
-                        time = (1, dt)
+                todo_status = 'TODO'
+            elif word == '-time':
+                endmsg = 1
+                if len(split_msg[1:]) > i+1 and split_msg[i+2] \
+                        and split_msg[i+2][0] != '-':
+                    date_list = split_msg[i+2].split('.')
+                    date_list = [eval(j) for j in date_list]
+                    dt = date(date_list[0], date_list[1], date_list[2])
+                    time = (1, dt)
+                else:
+                    dt = date.today() + timedelta(days=1)
+                    time = (1, dt)
         insertValues(message, tsk_msg, todo_status, time, is_private)
-        return 0xffc200, 'SUCCCESS', 'NEW TASK ADDED CORRECTLY'
+        return 0xffc200, 'SUCCESS', 'NEW TASK ADDED CORRECTLY'
+
+    if split_msg[0] == 'show':
+        tasks = getValues(message, is_private)
+        if len(split_msg) > 1 and split_msg[1][0] == '-':
+            if split_msg[1] == '-s':
+                return 0xffc200, 'Tasks', simple_ans(tasks)
+        else:
+            return 0xffc200, 'Tasks', ans(tasks)
 
     # When there is no command like provided
     else:
         return 0xFF0000, 'Error', 'wrong command, use -help for help'
+
+
+def simple_ans(tasks):
+    emoji = {'TODO': 'TODO ⭕️',
+             'InProgress': 'In Progress ⏳',
+             'DONE': 'DONE ✅'}
+    sep = '-------------------------------------------\
+            ------------------------\n'
+    answ = '------------------------------------------\
+            -------------------------\n'
+    for task in tasks:
+        line = "`ID: {}` `Task: {}`".format(task[0], task[1])
+        if task[2] != 'None':
+            line = line + " `Status: {}`".format(emoji[task[2]])
+        if task[3] != 0:
+            line = line + " `Deadline: {}`".format(task[3])
+        answ = answ + line + '\n' + sep
+    return answ
+
+
+def ans(tasks):
+    emoji = {'TODO': 'TODO ⭕️',
+             'InProgress': 'In Progress ⏳',
+             'DONE': 'DONE ✅'}
+    sep = '-------------------------------------------\
+            ------------------------\n'
+    answ = '------------------------------------------\
+            -------------------------\n'
+    for task in tasks:
+        line = "```ID: {}``` ```Task: {}```".format(task[0], task[1])
+        if task[2] != 'None':
+            line = line + " ```Status: {}```".format(emoji[task[2]])
+        if task[3] != 0:
+            line = line + " ```Deadline: {}```".format(task[3])
+        answ = answ + line + '\n' + sep
+    return answ
