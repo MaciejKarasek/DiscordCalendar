@@ -82,16 +82,19 @@ def insertValues(message, taskmsg, todo, time, isprivate):
 
 
 def getValues(message, prv):
-    channelID = str(message.channel.id)
     authorID = str(message.author.id)
 
     conn = sqlite3.connect('tasks.db')
     db = conn.cursor()
 
-    db.execute('''
-                SELECT ID FROM Main WHERE User_ID = ?
-                ''', [authorID])
-    usrID = db.fetchall()[0][0]
+    try:
+        db.execute('''
+                    SELECT ID FROM Main WHERE User_ID = ?
+                    ''', [authorID])
+        usrID = db.fetchall()[0][0]
+    except:
+        conn.commit()
+        return 0
     if not prv:
         db.execute('''
                     SELECT Task_ID FROM Tsk WHERE User_ID = ?
@@ -125,3 +128,56 @@ def getValues(message, prv):
             tskSummary[i][3] = 0
     conn.commit()
     return tskSummary
+
+
+def change_status(id, status, message, isPrivate):
+    authorID = str(message.author.id)
+    emoji = {'todo': 'TODO ⭕️',
+             'inprog': 'In Progress ⏳',
+             'done': 'DONE ✅',
+             'none': 'None'}
+    index = {'todo': 'TODO',
+             'inprog': 'InProgress',
+             'done': 'DONE',
+             'none': 'None'}
+    try:
+        emoji_status = emoji[status]
+        index_status = index[status]
+    except:
+        error = '**Wrong status, use one of those:** \
+                    \n`TODO` - TODO ⭕️\
+                    \n`InProg` - In Progress ⏳\
+                    \n`DONE` - DONE ✅\
+                    \n`None` -  No status'
+        return 0xFF0000, "Error", error
+    conn = sqlite3.connect('tasks.db')
+    db = conn.cursor()
+
+    try:
+        db.execute('''
+                    SELECT ID FROM Main WHERE User_ID = ?
+                    ''', [authorID])
+        usrID = db.fetchall()[0][0]
+    except:
+        conn.commit()
+        return 0xFF0000, 'Error', "You don't have any tasks"
+
+    db.execute('''
+                SELECT * FROM Tsk WHERE
+                User_ID = ? AND 
+                Task_ID = ? AND
+                IsPrivate = ?
+                ''', [usrID, id, isPrivate])
+    tsk = db.fetchall()
+    if len(tsk) != 1:
+        return 0xFF0000, 'Error', "You don't have task with id: `{}`".format(id)
+    try:
+        db.execute('''
+                    UPDATE Msg SET TD = ?
+                    WHERE Task_ID = ?
+                    ''', [index_status, id])
+    except:
+        return 0xFF0000, 'Error', "There was an error with proceeding this change"
+    conn.commit()
+    return 0xffc200, 'SUCCCESS', \
+        'Status of task `{}` was changed correctly to `{}`'.format(id, emoji_status)
