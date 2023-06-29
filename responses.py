@@ -29,7 +29,7 @@ def handle_response(message, usr_message, is_private) -> str:
                                     Arguments:\n\
                                     `-s` - shows all tasks in compact version\
                                     \n\n**CHANGE STATUS**\
-                                    ```-status <scope> <TODO / InProg / DONE>```\
+                                    ```-status <scope> <TODO / InProg / DONE / None>```\
                                     Scope:\
                                     \nUse `Task_ID` of exact task or `all`\
                                     to change status of all tasks\
@@ -48,10 +48,10 @@ def handle_response(message, usr_message, is_private) -> str:
                                     \n\n**PRIVATE TASKS**\
                                     \nTo create, show, change status and remove private tasks\
                                     use double prefix `--`\
-                                    \nexample: `--help` - Sends you private \
+                                    \nExample: `--help` - Sends you private \
                                                 message with bot instructions'
 
-    if split_msg[0] == 'add':
+    if split_msg[0] == 'add' or split_msg[0] == 'a':
         tsk_msg = ""
         todo_status = 'None'
         dt = 'None'
