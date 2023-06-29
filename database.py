@@ -1,3 +1,4 @@
+from datetime import datetime
 import sqlite3
 
 
@@ -92,7 +93,7 @@ def getValues(message, prv):
                     SELECT ID FROM Main WHERE User_ID = ?
                     ''', [authorID])
         usrID = db.fetchall()[0][0]
-    except:
+    except ValueError:
         conn.commit()
         return 0
     if not prv:
@@ -143,7 +144,7 @@ def change_status(id, status, message, isPrivate):
     try:
         emoji_status = emoji[status]
         index_status = index[status]
-    except:
+    except KeyError:
         error = '**Wrong status, use one of those:** \
                     \n`TODO` - TODO ⭕️\
                     \n`InProg` - In Progress ⏳\
@@ -158,26 +159,176 @@ def change_status(id, status, message, isPrivate):
                     SELECT ID FROM Main WHERE User_ID = ?
                     ''', [authorID])
         usrID = db.fetchall()[0][0]
-    except:
+    except KeyError:
         conn.commit()
         return 0xFF0000, 'Error', "You don't have any tasks"
 
-    db.execute('''
-                SELECT * FROM Tsk WHERE
-                User_ID = ? AND 
-                Task_ID = ? AND
-                IsPrivate = ?
-                ''', [usrID, id, isPrivate])
-    tsk = db.fetchall()
-    if len(tsk) != 1:
-        return 0xFF0000, 'Error', "You don't have task with id: `{}`".format(id)
-    try:
+    if id != 'all':
+        if isPrivate:
+            db.execute('''
+                        SELECT * FROM Tsk WHERE
+                        User_ID = ? AND
+                        Task_ID = ?
+                        ''', [usrID, id])
+        else:
+            db.execute('''
+                        SELECT * FROM Tsk WHERE
+                        User_ID = ? AND
+                        Task_ID = ? AND
+                        IsPrivate = ?
+                        ''', [usrID, id, isPrivate])
+        tsk = db.fetchall()
+    else:
+        if isPrivate:
+            db.execute('''
+                        SELECT Task_ID FROM Tsk WHERE
+                        User_ID = ?
+                        ''', [usrID])
+        else:
+            db.execute('''
+                    SELECT Task_ID FROM Tsk WHERE
+                    User_ID = ? AND
+                    IsPrivate = ?
+                    ''', [usrID, isPrivate])
+        tsk = db.fetchall()
+    tsk = [i[0] for i in tsk]
+    if len(tsk) == 0:
+        return 0xFF0000, 'Error', "You don't have task with id: `{}`\
+                        \nIf your task is private, use:\
+                        \n`--change {} {}`\
+                        \nOr ensure that id You\
+                        provided is correct".format(id, id, status)
+
+    for tsk_ID in tsk:
         db.execute('''
                     UPDATE Msg SET TD = ?
                     WHERE Task_ID = ?
-                    ''', [index_status, id])
-    except:
-        return 0xFF0000, 'Error', "There was an error with proceeding this change"
+                    ''', [index_status, tsk_ID])
+
     conn.commit()
-    return 0xffc200, 'SUCCCESS', \
-        'Status of task `{}` was changed correctly to `{}`'.format(id, emoji_status)
+    if id == 'all':
+        return 0xffc200, 'SUCCESS',\
+            'Status of all tasks was changed\
+            correctly to `{}`'.format(emoji_status)
+    return 0xffc200, 'SUCCESS',\
+        'Status of task `{}` was\
+        changed correctly to `{}`'.format(id, emoji_status)
+
+
+def remove_task(scope, message, isPrivate):
+    authorID = str(message.author.id)
+    error_notask = "You don't have task like that\
+                    \nIf your task is private, use:\
+                    \n`--remove <arg>`\
+                    \nOr ensure that id You\
+                    provided is correct\n\
+                    Type `-help` for more info"
+
+    conn = sqlite3.connect('tasks.db')
+    db = conn.cursor()
+
+    try:
+        db.execute('''
+                    SELECT ID FROM Main WHERE User_ID = ?
+                    ''', [authorID])
+        usrID = db.fetchall()[0][0]
+    except KeyError:
+        conn.commit()
+        return 0xFF0000, 'Error', "You don't have any tasks"
+    if isinstance(scope, int):
+        if isPrivate:
+            db.execute('''
+                        SELECT Task_ID FROM Tsk WHERE
+                        User_ID = ? AND
+                        Task_ID = ?
+                        ''', [usrID, scope])
+        else:
+            db.execute('''
+                        SELECT Task_ID FROM Tsk WHERE
+                        User_ID = ? AND
+                        Task_ID = ? AND
+                        IsPrivate = ?
+                        ''', [usrID, scope, isPrivate])
+        tsk = db.fetchall()
+
+    else:
+        if isPrivate:
+            db.execute('''
+                        SELECT Task_ID FROM Tsk WHERE
+                        User_ID = ?
+                        ''', [usrID])
+        else:
+            db.execute('''
+                    SELECT Task_ID FROM Tsk WHERE
+                    User_ID = ? AND
+                    IsPrivate = ?
+                    ''', [usrID, isPrivate])
+        tsk = db.fetchall()
+
+    tsk = [i[0] for i in tsk]
+
+    if len(tsk) == 0:
+        return 0xFF0000,'Error', error_notask
+
+    if scope == 'done':
+        for tsk_ID in tsk:
+            db.execute('''
+                        SELECT Task_ID FROM Msg WHERE
+                        Task_ID = ? AND
+                        TD = 'DONE'
+                        ''', [tsk_ID])
+            id = db.fetchall()
+            if len(id) != 0:
+                rm_data(tsk_ID)
+        conn.commit()
+        return 0xffc200, 'SUCCCESS', 'All your DONE tasks has been removed'
+    
+    elif scope == 'old':
+        for tsk_ID in tsk:
+            db.execute('''
+                        SELECT Task_ID FROM Msg WHERE
+                        Task_ID = ? AND
+                        Deadline = 1
+                        ''', [tsk_ID])
+            id = db.fetchall()
+            if len(id) == 0:
+                continue
+            db.execute('''
+                        SELECT Date FROM Time WHERE
+                        Task_ID = ?
+                        ''', [tsk_ID])
+            dt = db.fetchall()[0][0]
+            if datetime.strptime(dt,"%Y-%m-%d") < datetime.today():
+                rm_data(tsk_ID)
+        conn.commit()
+        return 0xffc200, 'SUCCESS', 'All your out of date tasks has been removed'
+    for tsk_ID in tsk:
+        rm_data(tsk_ID)
+    conn.commit()
+    all_ans = 'All your tasks has been removed'
+    id_ans = 'Your task with id:`{}` has been removed'.format(scope)
+    if scope == 'all':
+        return 0xffc200, 'SUCCESS', all_ans
+    else:
+        return 0xffc200, 'SUCCESS', id_ans
+
+
+def rm_data(task_id):
+    conn = sqlite3.connect('tasks.db')
+    db = conn.cursor()
+
+    db.execute('''
+                DELETE FROM Time WHERE
+                Task_ID = ?
+                ''', [task_id])
+    db.execute('''
+                DELETE FROM Msg WHERE
+                Task_ID = ?
+                ''', [task_id])
+    db.execute('''
+                DELETE FROM Tsk WHERE
+                Task_ID = ?
+                ''', [task_id])
+    conn.commit()
+
+
