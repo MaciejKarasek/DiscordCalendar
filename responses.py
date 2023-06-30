@@ -12,48 +12,47 @@ def handle_response(message, usr_message, is_private) -> str:
 
     # Command that returns usable commands and information about them
     if split_msg[0] == 'help':
-        return 0x87ceeb, '**Commands:**', '**ADD TASK**\n\
-                                    ```-add <Task info> <arguments>```\
-                                    Arguments:\n\
-                                    `-td` - Adds TODO status to your task\
-                                    `\n-time` - Adds deadline to your task,\
-                                    By default its tommorrow,\
-                                    but You can change this by adding\
-                                    date in format YYYY.MM.DD\n\
-                                    example: `-add "Task one"\
-                                    -td -time 2023.3.1` - Creates\
-                                    task with info "Task one",\
-                                    TODO status and deadline 2023.03.01\
-                                    \n\n**SHOW TASKS**\
-                                    ```-show```\
-                                    Arguments:\n\
-                                    `-s` - shows all tasks in compact version\
-                                    \n\n**CHANGE STATUS**\
-                                    ```-status <scope> <TODO / InProg\
-                                    / DONE / None>```\
-                                    Scope:\
-                                    \nUse `Task_ID` of exact task or `all`\
-                                    to change status of all tasks\
-                                    \nArguments:\
-                                    \n`TODO` - TODO ⭕️\
-                                    \n`InProg` - In Progress ⏳\
-                                    \n`DONE` - DONE ✅\
-                                    \n`None` -  No status\
-                                    \n\n**REMOVE TASKS**\
-                                    ```-remove <scope>```\
-                                    Scope:\
-                                    \n`Task_ID` - remove specific task,\
-                                    \n`all` or `-a` to remove your all tasks,\
-                                    \n`done` or `-d` to remove all\
-                                    your DONE tasks,\
-                                    \n`old` or `-o` to remove all your\
-                                    out of date tasks\
-                                    \n\n**PRIVATE TASKS**\
-                                    \nTo create, show, change status\
-                                    and remove private tasks\
-                                    use double prefix `--`\
-                                    \nExample: `--help` - Sends you private \
-                                                message with bot instructions'
+        s = '**ADD TASK**\n\
+            ```-add <Task info> <arguments>```\
+                Arguments:\n\
+                `-td` - Adds TODO status to your task\
+                `\n-time` - Adds deadline to your task,\
+                By default its tommorrow,\
+                but You can change this by adding\
+                date in format YYYY.MM.DD\n\
+                example: `-add "Task one" -td -time 2023.3.1` - Creates\
+                task with info "Task one",\
+                TODO status and deadline 2023.03.01\
+                \n\n**SHOW TASKS**\
+                ```-show```\
+                Arguments:\n\
+                `-s` - shows all tasks in compact version\
+                \n\n**CHANGE STATUS**\
+                ```-status <scope> <TODO / InProg / DONE / None>```\
+                Scope:\
+                \nUse `Task_ID` of exact task or `all`\
+                to change status of all tasks\
+                \nArguments:\
+                \n`TODO` - TODO ⭕️\
+                \n`InProg` - In Progress ⏳\
+                \n`DONE` - DONE ✅\
+                \n`None` -  No status\
+                \n\n**REMOVE TASKS**\
+                ```-remove <scope>```\
+                Scope:\
+                \n`Task_ID` - remove specific task,\
+                \n`all` or `-a` to remove your all tasks,\
+                \n`done` or `-d` to remove all\
+                your DONE tasks,\
+                \n`old` or `-o` to remove all your\
+                out of date tasks\
+                \n\n**PRIVATE TASKS**\
+                \nTo create, show, change status\
+                and remove private tasks\
+                use double prefix `--`\
+                \nExample: `--help` - Sends you private \
+                message with bot instructions'
+        return 0x87ceeb, '**Commands:**', s
 
     if split_msg[0] == 'add' or split_msg[0] == 'a':
         tsk_msg = ''
@@ -79,7 +78,7 @@ def handle_response(message, usr_message, is_private) -> str:
                         dt = date(date_list[0], date_list[1], date_list[2])
                         time = (1, dt)
                     except ValueError:
-                        return 0xff0000, 'ERROR', 'Wrong date format, \
+                        return 0xff0000, 'Error', 'Wrong date format, \
                             correct date should look like this: `YYYY.MM.DD`'
                 else:
                     dt = date.today() + timedelta(days=1)
@@ -110,7 +109,7 @@ def handle_response(message, usr_message, is_private) -> str:
                         status of specific task,\
                         or use `all` to change status of your all tasks'
                 return 0xFF0000, 'Error', error
-        except ValueError:
+        except IndexError:
             error = '**Correct usage of command:** \
                     `-status <Task-ID> <TODO / InProg / DONE / None>`\
                     \n`TODO` - TODO ⭕️\
@@ -139,7 +138,7 @@ def handle_response(message, usr_message, is_private) -> str:
                         Use `done` or `-d` to remove all your DONE tasks,\n\
                         Use `old` or `-o` to remove all your out of date tasks'
                 return 0xFF0000, 'Error', error
-        except ValueError:
+        except IndexError:
             error = '**Correct usage of command:** \
                     `-remove <Task-ID / all / done / old>`\
                     \n`all` - Removes all your tasks\
@@ -158,8 +157,8 @@ def simple_ans(tasks):
     emoji = {'TODO': 'TODO ⭕️',
              'InProgress': 'In Progress ⏳',
              'DONE': 'DONE ✅'}
-    sep = '-' * 70
-    sep = sep + '\n'
+    sep = '━' * 7
+    sep = '▶' + sep + '━ ━ ━  ━  ━  ━   ━    ━' + '\n'
     answ = sep
     for task in tasks:
         line = 'ID: `{}` Task: `{}`'.format(task[0], task[1])
@@ -175,7 +174,8 @@ def ans(tasks):
     emoji = {'TODO': 'TODO ⭕️',
              'InProgress': 'In Progress ⏳',
              'DONE': 'DONE ✅'}
-    sep = '-' * 70
+    sep = '━' * 7
+    sep = '▶' + sep + '━ ━ ━  ━  ━  ━   ━    ━'
     answ = sep
     for task in tasks:
         line = '```ID: {}``` ```Task: {}```'.format(task[0], task[1])

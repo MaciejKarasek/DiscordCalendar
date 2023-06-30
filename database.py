@@ -93,7 +93,7 @@ def getValues(message, prv):
                     SELECT ID FROM Main WHERE User_ID = ?
                     ''', [authorID])
         usrID = db.fetchall()[0][0]
-    except ValueError:
+    except IndexError:
         conn.commit()
         return 0
     if not prv:
@@ -144,7 +144,7 @@ def change_status(id, status, message, isPrivate):
     try:
         emoji_status = emoji[status]
         index_status = index[status]
-    except KeyError:
+    except IndexError:
         error = '**Wrong status, use one of those:** \
                     \n`TODO` - TODO ⭕️\
                     \n`InProg` - In Progress ⏳\
@@ -159,7 +159,7 @@ def change_status(id, status, message, isPrivate):
                     SELECT ID FROM Main WHERE User_ID = ?
                     ''', [authorID])
         usrID = db.fetchall()[0][0]
-    except KeyError:
+    except IndexError:
         conn.commit()
         return 0xFF0000, 'Error', "You don't have any tasks"
 
@@ -232,7 +232,7 @@ def remove_task(scope, message, isPrivate):
                     SELECT ID FROM Main WHERE User_ID = ?
                     ''', [authorID])
         usrID = db.fetchall()[0][0]
-    except KeyError:
+    except IndexError:
         conn.commit()
         return 0xFF0000, 'Error', "You don't have any tasks"
     if isinstance(scope, int):
