@@ -28,7 +28,7 @@
 ```bash
 $ git clone https://github.com/MaciejKarasek/DiscordCalendar.git
 ```
-* Put your `config.json` file into `.../DiscordCalendar/` directory 
+* Put your `config.json` file into `.../DiscordCalendar/` directory
 
 ### Install Python 3.11:
 Linux:
