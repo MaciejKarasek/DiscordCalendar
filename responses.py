@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-import sqlite3
 from database import insertValues, getValues, change_status, remove_task
 
 
@@ -21,7 +20,8 @@ def handle_response(message, usr_message, is_private) -> str:
                                     By default its tommorrow,\
                                     but You can change this by adding\
                                     date in format YYYY.MM.DD\n\
-                                    example: `-add "Task one" -td -time 2023.3.1` - Creates\
+                                    example: `-add "Task one"\
+                                    -td -time 2023.3.1` - Creates\
                                     task with info "Task one",\
                                     TODO status and deadline 2023.03.01\
                                     \n\n**SHOW TASKS**\
@@ -29,7 +29,8 @@ def handle_response(message, usr_message, is_private) -> str:
                                     Arguments:\n\
                                     `-s` - shows all tasks in compact version\
                                     \n\n**CHANGE STATUS**\
-                                    ```-status <scope> <TODO / InProg / DONE / None>```\
+                                    ```-status <scope> <TODO / InProg\
+                                    / DONE / None>```\
                                     Scope:\
                                     \nUse `Task_ID` of exact task or `all`\
                                     to change status of all tasks\
@@ -43,16 +44,19 @@ def handle_response(message, usr_message, is_private) -> str:
                                     Scope:\
                                     \n`Task_ID` - remove specific task,\
                                     \n`all` or `-a` to remove your all tasks,\
-                                    \n`done` or `-d` to remove all your DONE tasks,\
-                                    \n`old` or `-o` to remove all your out of date tasks\
+                                    \n`done` or `-d` to remove all\
+                                    your DONE tasks,\
+                                    \n`old` or `-o` to remove all your\
+                                    out of date tasks\
                                     \n\n**PRIVATE TASKS**\
-                                    \nTo create, show, change status and remove private tasks\
+                                    \nTo create, show, change status\
+                                    and remove private tasks\
                                     use double prefix `--`\
                                     \nExample: `--help` - Sends you private \
                                                 message with bot instructions'
 
     if split_msg[0] == 'add' or split_msg[0] == 'a':
-        tsk_msg = ""
+        tsk_msg = ''
         todo_status = 'None'
         dt = 'None'
         endmsg = 0
@@ -98,7 +102,7 @@ def handle_response(message, usr_message, is_private) -> str:
             if split_msg[1].isnumeric():
                 task_ID = int(split_msg[1])
                 status = str(split_msg[2])
-            elif split_msg[1] == "all" or split_msg[1] == '-a':
+            elif split_msg[1] == 'all' or split_msg[1] == '-a':
                 task_ID = 'all'
                 status = str(split_msg[2])
             else:
@@ -122,7 +126,7 @@ def handle_response(message, usr_message, is_private) -> str:
             arg = split_msg[1]
             if arg.isnumeric():
                 scope = int(arg)
-            elif arg == "all" or arg == '-a':
+            elif arg == 'all' or arg == '-a':
                 scope = 'all'
             elif arg == 'done' or arg == '-d':
                 scope = 'done'
@@ -158,11 +162,11 @@ def simple_ans(tasks):
     sep = sep + '\n'
     answ = sep
     for task in tasks:
-        line = "ID: `{}` Task: `{}`".format(task[0], task[1])
+        line = 'ID: `{}` Task: `{}`'.format(task[0], task[1])
         if task[2] != 'None':
-            line = line + " Status: `{}`".format(emoji[task[2]])
+            line = line + ' Status: `{}`'.format(emoji[task[2]])
         if task[3] != 0:
-            line = line + " Deadline: `{}`".format(task[3])
+            line = line + ' Deadline: `{}`'.format(task[3])
         answ = answ + line + '\n' + sep
     return answ
 
@@ -174,10 +178,10 @@ def ans(tasks):
     sep = '-' * 70
     answ = sep
     for task in tasks:
-        line = "```ID: {}``` ```Task: {}```".format(task[0], task[1])
+        line = '```ID: {}``` ```Task: {}```'.format(task[0], task[1])
         if task[2] != 'None':
-            line = line + " ```Status: {}```".format(emoji[task[2]])
+            line = line + ' ```Status: {}```'.format(emoji[task[2]])
         if task[3] != 0:
-            line = line + " ```Deadline: {}```".format(task[3])
+            line = line + ' ```Deadline: {}```'.format(task[3])
         answ = answ + line + sep
     return answ

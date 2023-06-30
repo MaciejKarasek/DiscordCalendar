@@ -22,7 +22,7 @@ def run_bot():
     f = open('config.json')
     data = json.load(f)
     f.close()
-    TOKEN = data["token"]
+    TOKEN = data['token']
     # Bot configuration
     intents = discord.Intents.default()
     intents.message_content = True
@@ -30,15 +30,15 @@ def run_bot():
 
     @client.event
     async def on_ready():
-        print("{} is now running!".format(client.user))
+        print('{} is now running!'.format(client.user))
 
     @client.event
     # Run this when someone sends a message
     async def on_message(message):
         if message.author != client.user:
-            username = str(message.author)
+            # username = str(message.author)
             usr_message = str(message.content)
-            channel = str(message.channel)
+            # channel = str(message.channel)
             if usr_message[0] == '-':
                 if usr_message[1] == '-':
                     # Remove first two characters, '--' means private message
