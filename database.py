@@ -150,7 +150,7 @@ def change_status(id, status, message, isPrivate):
                     \n`InProg` - In Progress ⏳\
                     \n`DONE` - DONE ✅\
                     \n`None` -  No status'
-        return 0xFF0000, "Error", error
+        return 0xFF0000, 'Error', error
     conn = sqlite3.connect('tasks.db')
     db = conn.cursor()
 
@@ -195,7 +195,7 @@ def change_status(id, status, message, isPrivate):
     if len(tsk) == 0:
         return 0xFF0000, 'Error', "You don't have task with id: `{}`\
                         \nIf your task is private, use:\
-                        \n`--change {} {}`\
+                        \n`--status {} {}`\
                         \nOr ensure that id You\
                         provided is correct".format(id, id, status)
 
@@ -268,7 +268,7 @@ def remove_task(scope, message, isPrivate):
     tsk = [i[0] for i in tsk]
 
     if len(tsk) == 0:
-        return 0xFF0000,'Error', error_notask
+        return 0xFF0000, 'Error', error_notask
 
     if scope == 'done':
         for tsk_ID in tsk:
@@ -282,7 +282,7 @@ def remove_task(scope, message, isPrivate):
                 rm_data(tsk_ID)
         conn.commit()
         return 0xffc200, 'SUCCCESS', 'All your DONE tasks has been removed'
-    
+
     elif scope == 'old':
         for tsk_ID in tsk:
             db.execute('''
@@ -298,10 +298,11 @@ def remove_task(scope, message, isPrivate):
                         Task_ID = ?
                         ''', [tsk_ID])
             dt = db.fetchall()[0][0]
-            if datetime.strptime(dt,"%Y-%m-%d") < datetime.today():
+            if datetime.strptime(dt, '%Y-%m-%d') < datetime.today():
                 rm_data(tsk_ID)
         conn.commit()
-        return 0xffc200, 'SUCCESS', 'All your out of date tasks has been removed'
+        ans = 'All your out of date tasks has been removed'
+        return 0xffc200, 'SUCCESS', ans
     for tsk_ID in tsk:
         rm_data(tsk_ID)
     conn.commit()
@@ -330,5 +331,3 @@ def rm_data(task_id):
                 Task_ID = ?
                 ''', [task_id])
     conn.commit()
-
-
