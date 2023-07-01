@@ -1,10 +1,10 @@
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 from database import insertValues, getValues, change_status, remove_task
 
 
 def handle_response(message, usr_message, is_private) -> str:
-    p_message = usr_message.lower()
-    split_msg = p_message.split()
+    split_msg = usr_message.split()
+    split_msg[0] = split_msg[0].lower()
     # TODO more commands and functionality
     # Test command
     if split_msg[0] == 'test run':
@@ -19,7 +19,7 @@ def handle_response(message, usr_message, is_private) -> str:
                 `\n-time` - Adds deadline to your task,\
                 By default its tommorrow,\
                 but You can change this by adding\
-                date in format YYYY.MM.DD\n\
+                date in format YYYY.MM.DD or DD.MM.YYYY\n\
                 example: `-add "Task one" -td -time 2023.3.1` - Creates\
                 task with info "Task one",\
                 TODO status and deadline 2023.03.01\
@@ -55,33 +55,43 @@ def handle_response(message, usr_message, is_private) -> str:
         return 0x87ceeb, '**Commands:**', s
 
     if split_msg[0] == 'add' or split_msg[0] == 'a':
+        args = ['-time', '-td', '-todo']
         tsk_msg = ''
         todo_status = 'None'
         dt = 'None'
         endmsg = 0
         time = (0, dt)
         for i, word in enumerate(split_msg[1:]):
-            if i == 0 and word[0] != '-':
+            lower_word = word.lower()
+            if i == 0 and lower_word not in args:
                 tsk_msg = tsk_msg + word
-            elif word[0] != '-' and endmsg == 0:
+            elif lower_word not in args and endmsg == 0:
                 tsk_msg = tsk_msg + ' ' + word
-            elif word == '-td':
+            elif lower_word == '-td' or lower_word == '-todo':
                 endmsg = 1
                 todo_status = 'TODO'
-            elif word == '-time':
+            elif lower_word == '-time':
                 endmsg = 1
                 if len(split_msg[1:]) > i+1 and split_msg[i+2] \
                         and split_msg[i+2][0] != '-':
                     try:
                         date_list = split_msg[i+2].split('.')
-                        date_list = [int(j.lstrip('0')) for j in date_list]
-                        dt = date(date_list[0], date_list[1], date_list[2])
+                        if len(date_list[0]) == 4:
+                            date_format = '%Y.%m.%d'
+                        elif len(date_list[2]) == 4:
+                            date_format = '%d.%m.%Y'
+                        else:
+                            raise ValueError('Wrong date format')
+                        dt = datetime.strptime(split_msg[i+2], date_format)
+                        dt = dt.replace(second=0, microsecond=0)
                         time = (1, dt)
                     except ValueError:
                         return 0xff0000, 'Error', 'Wrong date format, \
-                            correct date should look like this: `YYYY.MM.DD`'
+                            correct date should look like this: `YYYY.MM.DD`\
+                            / `DD.MM.YYYY`'
                 else:
-                    dt = date.today() + timedelta(days=1)
+                    dt = datetime.today() + timedelta(days=1)
+                    dt = dt.replace(second=0, microsecond=0)
                     time = (1, dt)
         insertValues(message, tsk_msg, todo_status, time, is_private)
         return 0xffc200, 'SUCCESS', 'NEW TASK ADDED CORRECTLY'
@@ -91,13 +101,19 @@ def handle_response(message, usr_message, is_private) -> str:
         if tasks == 0:
             return 0xFF0000, 'Error', "You don't have any tasks"
         if len(split_msg) > 1 and split_msg[1][0] == '-':
-            if split_msg[1] == '-s':
+            if split_msg[1].lower() == '-s':
                 return 0xffc200, 'Tasks', simple_ans(tasks)
+            else:
+                errmsg = 'Wrong command argument, use `-show -s` to show\
+                        tasks in compact version'
+                return 0xff0000, 'Error', errmsg
         else:
             return 0xffc200, 'Tasks', ans(tasks)
 
     if split_msg[0] == 'status':
         try:
+            split_msg[1] = split_msg[1].lower()
+            split_msg[2] = split_msg[2].lower()
             if split_msg[1].isnumeric():
                 task_ID = int(split_msg[1])
                 status = str(split_msg[2])
@@ -122,7 +138,7 @@ def handle_response(message, usr_message, is_private) -> str:
 
     if split_msg[0] == 'remove' or split_msg[0] == 'r':
         try:
-            arg = split_msg[1]
+            arg = split_msg[1].lower()
             if arg.isnumeric():
                 scope = int(arg)
             elif arg == 'all' or arg == '-a':
