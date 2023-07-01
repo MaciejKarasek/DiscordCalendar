@@ -102,13 +102,13 @@ def handle_response(message, usr_message, is_private) -> str:
             return 0xFF0000, 'Error', "You don't have any tasks"
         if len(split_msg) > 1 and split_msg[1][0] == '-':
             if split_msg[1].lower() == '-s':
-                return 0xffc200, 'Tasks', simple_ans(tasks)
+                return 0xffc200, 'Tasks', ans(tasks, 1)
             else:
                 errmsg = 'Wrong command argument, use `-show -s` to show\
                         tasks in compact version'
                 return 0xff0000, 'Error', errmsg
         else:
-            return 0xffc200, 'Tasks', ans(tasks)
+            return 0xffc200, 'Tasks', ans(tasks, 0)
 
     if split_msg[0] == 'status':
         try:
@@ -169,35 +169,13 @@ def handle_response(message, usr_message, is_private) -> str:
         return 0xFF0000, 'Error', 'wrong command, use -help for help'
 
 
-def simple_ans(tasks):
-    emoji = {'TODO': 'TODO ⭕️',
-             'InProgress': 'In Progress ⏳',
-             'DONE': 'DONE ✅'}
+def ans(tasks, simple):
     sep = '━' * 7
     sep = '▶' + sep + '━ ━ ━  ━  ━  ━   ━    ━' + '\n'
     answ = sep
     for task in tasks:
-        line = 'ID: `{}` Task: `{}`'.format(task[0], task[1])
-        if task[2] != 'None':
-            line = line + ' Status: `{}`'.format(emoji[task[2]])
-        if task[3] != 0:
-            line = line + ' Deadline: `{}`'.format(task[3])
-        answ = answ + line + '\n' + sep
-    return answ
-
-
-def ans(tasks):
-    emoji = {'TODO': 'TODO ⭕️',
-             'InProgress': 'In Progress ⏳',
-             'DONE': 'DONE ✅'}
-    sep = '━' * 7
-    sep = '▶' + sep + '━ ━ ━  ━  ━  ━   ━    ━'
-    answ = sep
-    for task in tasks:
-        line = '```ID: {}``` ```Task: {}```'.format(task[0], task[1])
-        if task[2] != 'None':
-            line = line + ' ```Status: {}```'.format(emoji[task[2]])
-        if task[3] != 0:
-            line = line + ' ```Deadline: {}```'.format(task[3])
-        answ = answ + line + sep
+        task.simple = simple
+        line = f'{task}'
+        answ = (answ + line + '\n' + sep)\
+            if simple == 1 else (answ + line + sep)
     return answ
