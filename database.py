@@ -2,6 +2,36 @@ from datetime import datetime
 import sqlite3
 
 
+class Task:
+    def __init__(self, tskInfo) -> None:
+        self.id = tskInfo[0]
+        self.message = tskInfo[1]
+        self.status = tskInfo[2]
+        self.deadline = tskInfo[3]
+
+    def __str__(self) -> str:
+        emoji = {'TODO': 'TODO ⭕️',
+                 'InProgress': 'In Progress ⏳',
+                 'DONE': 'DONE ✅'}
+
+        if self.simple == 1:
+            line = f'ID: `{self.id}` Task: `{self.message}`'
+            if self.status != 'None':
+                line = line + f' Status: `{emoji[self.status]}`'
+            if self.deadline != 0:
+                line = line + f' Deadline: `{self.date}`'
+        else:
+            line = f'```ID: {self.id}``` ```Task: {self.message}```'
+            if self.status != 'None':
+                line = line + f' ```Status: {emoji[self.status]}```'
+            if self.deadline != 0:
+                line = line + f' ```Deadline: {self.date}```'
+
+        return line
+    date = 0
+    simple = 0
+
+
 def CreateTables():
     conn = sqlite3.connect('tasks.db')
     db = conn.cursor()
@@ -55,7 +85,7 @@ def insertValues(message, taskmsg, todo, time, isprivate):
     db = conn.cursor()
 
     db.execute('''
-                INSERT  OR IGNORE
+                INSERT OR IGNORE
                 INTO Main (User_ID) VALUES (?)
         ''', [str(message.author.id)])
     db.execute('''
@@ -108,25 +138,25 @@ def getValues(message, prv):
                     ''', [usrID])
         tskID = db.fetchall()
     tskID = [i[0] for i in tskID]
-    tskSummary = [[0] * 4 for i in range(len(tskID))]
+    tskSummary = [0] * len(tskID)
+    tskInfo = [0 * 5]
     for i, id in enumerate(tskID):
         db.execute('''
                     SELECT Message, TD, Deadline FROM Msg
                     WHERE Task_ID = ?
                     ''', [id])
-        tskInfo = db.fetchall()[0]
-        tskSummary[i][0] = id
-        tskSummary[i][1] = tskInfo[0]
-        tskSummary[i][2] = tskInfo[1]
-        if tskInfo[2] == 1:
+        tskInfo[1:] = db.fetchall()[0]
+        tskInfo[0] = id
+        tskSummary[i] = Task(tskInfo)
+
+        if tskSummary[i].deadline == 1:
             db.execute('''
                     SELECT Date FROM Time
                     WHERE Task_ID = ?
                     ''', [id])
             tskDate = db.fetchall()[0][0]
-            tskSummary[i][3] = tskDate
-        else:
-            tskSummary[i][3] = 0
+            tskSummary[i].date = tskDate
+
     conn.commit()
     return tskSummary
 
