@@ -1,6 +1,8 @@
+from discord.ext import tasks
 import discord
-from responses import handle_response
+from responses import handle_response, ans
 import json
+from database import get_tasks_with_date
 
 
 async def send_message(message, user_message, is_private):
@@ -11,7 +13,6 @@ async def send_message(message, user_message, is_private):
         ) if is_private else await message.channel.send(
             embed=discord.Embed(color=color, title=title, description=response)
         )
-    # TODO Exceptions
     except Exception as e:
         print(e)
 
@@ -25,11 +26,13 @@ def run_bot():
     # Bot configuration
     intents = discord.Intents.default()
     intents.message_content = True
+    intents.members = True
     client = discord.Client(intents=intents)
 
     @client.event
     async def on_ready():
         print("{} is now running!".format(client.user))
+        await timer.start()
 
     @client.event
     # Run this when someone sends a message
@@ -47,6 +50,19 @@ def run_bot():
                     # Remove first character of message string if it is '-'
                     usr_message = usr_message[1:]
                     await send_message(message, usr_message, is_private=False)
+
+    @tasks.loop(minutes=1)
+    async def timer():
+        tasks = get_tasks_with_date()
+        color = 0x40FF00
+        title = "Reminder about Task"
+        if len(tasks) != 0:
+            for task in tasks:
+                message = f"{task}"
+                user = client.get_user(task.user_ID)
+                await user.send(
+                    embed=discord.Embed(color=color, title=title, description=message)
+                )
 
     # Run the bot
     client.run(TOKEN)

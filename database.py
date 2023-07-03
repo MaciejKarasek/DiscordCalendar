@@ -29,6 +29,7 @@ class Task:
 
     date = 0
     simple = 0
+    user_ID = 0
 
 
 def CreateTables():
@@ -422,7 +423,7 @@ def remove_task(scope, message, isPrivate):
                 [tsk_ID],
             )
             dt = db.fetchall()[0][0]
-            if datetime.strptime(dt, "%Y-%m-%d") < datetime.today():
+            if datetime.strptime(dt, "%Y-%m-%d %H:%M:%S") < datetime.today():
                 rm_data(tsk_ID)
         conn.commit()
         ans = "All your out of date tasks has been removed"
@@ -464,3 +465,44 @@ def rm_data(task_id):
         [task_id],
     )
     conn.commit()
+
+
+def get_tasks_with_date():
+    conn = sqlite3.connect("tasks.db")
+    db = conn.cursor()
+
+    Date = datetime.today().replace(second=0, microsecond=0)
+    db.execute(
+        """
+                SELECT Task_ID FROM Time WHERE
+                Date = ?
+                """,
+        [Date],
+    )
+    tsk_list = db.fetchall()
+    tsk_list = [i[0] for i in tsk_list]
+
+    tskSummary = [0] * len(tsk_list)
+    tskInfo = [0 * 5]
+    for i, id in enumerate(tsk_list):
+        db.execute(
+            """
+                    SELECT Message, TD, Deadline FROM Msg
+                    WHERE Task_ID = ?
+                    """,
+            [id],
+        )
+        tskInfo[1:] = db.fetchall()[0]
+        tskInfo[0] = id
+        tskSummary[i] = Task(tskInfo)
+
+        db.execute(
+            """
+                    SELECT User_ID FROM Main WHERE
+                    ID = (SELECT User_ID FROM Tsk WHERE Task_ID = ?)
+                    """,
+            [id],
+        )
+        tskSummary[i].user_ID = int(db.fetchall()[0][0])
+        tskSummary[i].date = Date
+    return tskSummary

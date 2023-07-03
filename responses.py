@@ -78,23 +78,32 @@ def handle_response(message, usr_message, is_private) -> str:
                     and split_msg[i + 2][0] != "-"
                 ):
                     try:
+                        time_arg = split_msg[i + 2]
                         date_list = split_msg[i + 2].split(".")
-                        if len(date_list[0]) == 4:
-                            date_format = "%Y.%m.%d"
-                        elif len(date_list[2]) == 4:
-                            date_format = "%d.%m.%Y"
-                        else:
-                            raise ValueError("Wrong date format")
-                        dt = datetime.strptime(split_msg[i + 2], date_format)
+                        date_format = format_checker(date_list)
+                        if (
+                            len(split_msg[1:]) > i + 2
+                            and split_msg[i + 3]
+                            and split_msg[i + 3][0] != "-"
+                        ):
+                            time_arg = time_arg + " " + split_msg[i + 3]
+                            date_format = date_format + " " + "%H:%M"
+                        dt = datetime.strptime(time_arg, date_format)
                         dt = dt.replace(second=0, microsecond=0)
+                        if dt < datetime.today().replace(second=0, microsecond=0):
+                            return (
+                                0xFF0000,
+                                "Error",
+                                "The date must be later than the current time",
+                            )
                         time = (1, dt)
                     except ValueError:
                         return (
                             0xFF0000,
                             "Error",
                             "Wrong date format, \
-                            correct date should look like this: `YYYY.MM.DD`\
-                            / `DD.MM.YYYY`",
+                            correct date should look like this: `YYYY.MM.DD HH:MM`\
+                            / `DD.MM.YYYY HH:MM`",
                         )
                 else:
                     dt = datetime.today() + timedelta(days=1)
@@ -105,7 +114,7 @@ def handle_response(message, usr_message, is_private) -> str:
 
     if split_msg[0] == "show":
         tasks = getValues(message, is_private)
-        if tasks == 0:
+        if len(tasks) == 0:
             return 0xFF0000, "Error", "You don't have any tasks"
         if len(split_msg) > 1 and split_msg[1][0] == "-":
             if split_msg[1].lower() == "-s":
@@ -185,3 +194,12 @@ def ans(tasks, simple):
         line = f"{task}"
         answ = (answ + line + "\n" + sep) if simple == 1 else (answ + line + sep)
     return answ
+
+
+def format_checker(date):
+    if len(date[0]) == 4:
+        return "%Y.%m.%d"
+    elif len(date[2]) == 4:
+        return "%d.%m.%Y"
+    else:
+        raise ValueError("Wrong date format")
