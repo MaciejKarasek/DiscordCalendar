@@ -30,6 +30,8 @@ class Task:
     date = 0
     simple = 0
     user_ID = 0
+    prv = 0
+    channel_ID = 0
 
 
 def CreateTables():
@@ -498,10 +500,20 @@ def get_tasks_with_date():
 
         db.execute(
             """
-                    SELECT User_ID FROM Main WHERE
-                    ID = (SELECT User_ID FROM Tsk WHERE Task_ID = ?)
+                    SELECT User_ID, Channel_ID, IsPrivate FROM Tsk WHERE Task_ID = ?
                     """,
             [id],
+        )
+        ans = db.fetchall()[0]
+        tskSummary[i].channel_ID = int(ans[1])
+        tskSummary[i].prv = int(ans[2])
+
+        db.execute(
+            """
+                    SELECT User_ID FROM Main WHERE
+                    ID = ?
+                    """,
+            [ans[0]],
         )
         tskSummary[i].user_ID = int(db.fetchall()[0][0])
         tskSummary[i].date = Date

@@ -16,13 +16,15 @@ def handle_response(message, usr_message, is_private) -> str:
             ```-add <Task info> <arguments>```\
                 Arguments:\n\
                 `-td` - Adds TODO status to your task\
-                `\n-time` - Adds deadline to your task,\
+                `\n-time` - Adds deadline/reminder to your task,\
                 By default its tommorrow,\
                 but You can change this by adding\
-                date in format YYYY.MM.DD or DD.MM.YYYY\n\
-                example: `-add "Task one" -td -time 2023.3.1` - Creates\
+                date in format **YYYY.MM.DD** or **DD.MM.YYYY**, also you can\
+                add hour to your date in format **HH:MM**, default is 00:00\n\
+                example: `-add "Task one" -td -time 2023.3.1 14:00` - Creates\
                 task with info "Task one",\
-                TODO status and deadline 2023.03.01\
+                TODO status and deadline 2023.03.01 at 14:00.\
+                **Bot will send you reminder when deadline ends**\
                 \n\n**SHOW TASKS**\
                 ```-show```\
                 Arguments:\n\
