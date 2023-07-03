@@ -59,10 +59,22 @@ def run_bot():
         if len(tasks) != 0:
             for task in tasks:
                 message = f"{task}"
-                user = client.get_user(task.user_ID)
-                await user.send(
-                    embed=discord.Embed(color=color, title=title, description=message)
-                )
+                if task.prv == 1:
+                    user = client.get_user(task.user_ID)
+                    await user.send(
+                        embed=discord.Embed(
+                            color=color, title=title, description=message
+                        )
+                    )
+                else:
+                    channel = client.get_channel(task.channel_ID)
+                    mention = "<@" + str(task.user_ID) + ">"
+                    await channel.send(
+                        mention,
+                        embed=discord.Embed(
+                            color=color, title=title, description=message
+                        ),
+                    )
 
     # Run the bot
     client.run(TOKEN)

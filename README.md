@@ -58,8 +58,8 @@ Go to .../DiscordCalendar directory and run this command:
 ```
 Arguments:\
 `-td` - Adds TODO status to your task<br />
-`-time` - Adds deadline to your task, by default its tommorrow, but You can change this by adding date in format `YYYY.MM.DD`<br />
-Example: `-a "Task one" -td -time 2023.3.1` - Creates task with info "Task one", TODO status and deadline 2023.03.01.
+`-time` - Adds deadline / reminder to your task, by default its tommorrow at 00:00, but You can change this by adding date in format `YYYY.MM.DD` / `DD.MM.YYYY` and hour(optional) in format `HH:MM`<br />
+Example: `-a "Task one" -td -time 2023.3.1 14:00` - Creates task with info "Task one", TODO status and deadline / reminder 2023.03.01 at 14:00.
 
 #### Show tasks:
 ```
